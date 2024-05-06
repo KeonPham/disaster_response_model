@@ -1,16 +1,40 @@
 import sys
-
+import pandas as pd
+from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
-    pass
-
+    messages =  pd.read_csv(messages_filepath)
+    categories = pd.read_csv(categories_filepath)
+    df = pd.merge(messages, categories, on = 'id')
+    return df
 
 def clean_data(df):
-    pass
+    """
+    This function splitd categories into separate category columns and convert category values to just numbers 0 or 1
 
+    """
+    categories = df['categories'].str.split(pat=';',expand=True)
+    row = categories.iloc[0]
+    category_colnames = row.apply(lambda s:s[:-2])
+    categories.columns = category_colnames
+    
+    for column in categories:
+        categories[column] = categories[column].apply(lambda s:s[-1])
+        categories[column] = categories[column].astype(int)
 
-def save_data(df, database_filename):
-    pass  
+    df = df.drop(['categories'],axis = 1)
+    df = pd.concat([df,categories],axis = 1)
+
+    df = df.drop('child_alone',axis = 1)
+    df['related'] = df['related'].apply(lambda x: 1 if x==2 else x) 
+
+    df = df.drop_duplicates()
+
+    return df
+
+def save_data(df, database_filepath):
+    engine = create_engine('sqlite:///'+database_filepath)
+    df.to_sql('DisasterResponse', engine, index=False, if_exists='replace')
 
 
 def main():
