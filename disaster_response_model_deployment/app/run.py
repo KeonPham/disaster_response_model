@@ -4,7 +4,7 @@ import pandas as pd
 
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-
+from sklearn.model_selection import train_test_split
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
@@ -40,11 +40,19 @@ def index():
     
     # extract data needed for visuals
     # TODO: Below is an example - modify to extract data for your own visuals
+    # extract data needed for visuals
+    X = df['message']
+    Y = df.iloc[:,4:]
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=123)
+
+    # data for bar plot
+    category_pct = Y_train.mean().sort_values(ascending= False)
+    category = category_pct.index.str.replace('_', ' ')
+
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -63,7 +71,48 @@ def index():
                     'title': "Genre"
                 }
             }
-        }
+        },
+        {
+            'data': [
+                Bar(
+                    x=category,
+                    y=category_pct
+                )
+            ],
+
+            'layout': {
+                'title': {
+                'text': 'Proportions of categories',
+                'font': {'size': 18, 'family': 'Arial', 'color': 'black', 'weight': 'bold'}
+            },
+                'yaxis': {
+                    'title': {
+                        'text':"Percentage",
+                        'font': {'size': 15, 'family': 'Arial', 'color': 'black', 'weight': 'bold'}
+                    },
+                    'tickformat': ',.0%',
+                    
+                },
+                'xaxis': {
+                    'title': {
+                        'text':"Category",
+                        'font': {'size': 15, 'family': 'Arial', 'color': 'black', 'weight': 'bold'}
+                    },
+                    'tickangle': 45
+                },
+                'height': 800, 
+                'width': 1100,
+                'margin': {
+                    'l': 150, 
+                    'r': 100,
+                    'b': 200, 
+                    't': 100, 
+                    'pad': 4 
+                }
+            }
+        },
+
+
     ]
     
     # encode plotly graphs in JSON

@@ -14,9 +14,28 @@ from sklearn.multioutput import MultiOutputClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from xgboost import XGBClassifier
+from sklearn.model_selection import GridSearchCV
 
 
 def load_data(database_filepath):
+    """
+    Load data from a SQLite database.
+
+    Parameters:
+    database_filepath (str): The file path for the SQLite database.
+
+    Returns:
+    tuple: A tuple containing:
+        - X (pandas.Series): Series containing messages.
+        - Y (pandas.DataFrame): DataFrame containing categories.
+        - category_names (list): List of category names.
+    
+    Steps:
+    1. Create a SQLAlchemy Engine object with the specified database filepath.
+    2. Read data from the 'DisasterResponse' table into a DataFrame.
+    3. Extract the messages into X and the categories into Y.
+    4. Get the category names.
+    """
 
     engine = create_engine('sqlite:///'+database_filepath)
     df = pd.read_sql('SELECT * FROM DisasterResponse', engine)
@@ -26,6 +45,21 @@ def load_data(database_filepath):
     return X, Y, category_names
 
 def tokenize(text):
+    """
+    Tokenize text data.
+
+    Parameters:
+    text (str): The text data to be tokenized.
+
+    Returns:
+    list: A list of cleaned and lemmatized tokens.
+
+    Steps:
+    1. Tokenize the input text into words.
+    2. Filter out stopwords and non-alphabetic tokens.
+    3. Lemmatize each token.
+    4. Return the list of cleaned and lemmatized tokens.
+    """
 
     tokens = word_tokenize(text.lower())
     tokens = [w for w in tokens if w not in stopwords.words("english") and w.isalpha()]
@@ -40,14 +74,46 @@ def tokenize(text):
 
 
 def build_model(clf = XGBClassifier()):
+    """
+    Build a machine learning pipeline.
+
+    Parameters:
+    clf (estimator, optional): The classifier to use in the pipeline. Defaults to XGBClassifier().
+
+    Returns:
+    sklearn.pipeline.Pipeline: A pipeline containing:
+        - TfidfVectorizer for text feature extraction using the 'tokenize' function.
+        - MultiOutputClassifier for multi-label classification using the specified classifier.
+
+    Note:
+    The default classifier is XGBClassifier.
+
+    """
     model = Pipeline([
     ('tfidf', TfidfVectorizer(tokenizer=tokenize)),
     ('clf', MultiOutputClassifier(clf))
     ])
+    
     return model
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """
+    Evaluate the performance of a machine learning model.
+
+    Parameters:
+    model (sklearn.pipeline.Pipeline): The trained model to be evaluated.
+    X_test (pandas.Series): Series containing test messages.
+    Y_test (pandas.DataFrame): DataFrame containing true labels for test messages.
+    category_names (list): List of category names.
+
+    Returns:
+    None
+
+    Steps:
+    1. Make predictions on the test set.
+    2. Print a classification report to evaluate the model's performance.
+    """
     Y_pred = model.predict(X_test)
     print(classification_report(Y_test.values, Y_pred, target_names= category_names))
 
