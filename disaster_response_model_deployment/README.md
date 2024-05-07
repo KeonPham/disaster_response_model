@@ -57,4 +57,4 @@ In a world increasingly affected by natural and man-made disasters, this project
 ### Video Demo on my linkedin blog's post: https://www.linkedin.com/feed/update/urn:li:activity:7193287060659585024/
 
 ### Evaluation Report
-![ScreenShot](evaluation_report.png)
+![](evaluation_report.png)
