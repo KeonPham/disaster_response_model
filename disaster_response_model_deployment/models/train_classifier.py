@@ -89,12 +89,18 @@ def build_model(clf = XGBClassifier()):
     The default classifier is XGBClassifier.
 
     """
-    model = Pipeline([
+    pipeline = Pipeline([
     ('tfidf', TfidfVectorizer(tokenizer=tokenize)),
     ('clf', MultiOutputClassifier(clf))
     ])
     
-    return model
+    parameters = {
+        'clf__estimator__n_estimators': [100, 200]
+    }
+
+    cv = GridSearchCV(pipeline, param_grid=parameters)
+
+    return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
@@ -131,7 +137,7 @@ def main():
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=123)
         
         print('Building model...')
-        model = build_model(clf=XGBClassifier(learning_rate=0.5, n_estimators=100))
+        model = build_model()
         
         print('Training model...')
         model.fit(X_train, Y_train)
